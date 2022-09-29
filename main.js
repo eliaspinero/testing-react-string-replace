@@ -17,29 +17,43 @@ El término “adopción” se refiere al proceso de alguien legalmente converti
 * Este término puede ser traducido con un término que el lenguaje de la traducción utilice para describir esta relación especial entre padres e hijos. Asegúrese que sea entendido que esto tiene un significado figurado o espiritual.
 * La frase “experimentar la adopción como hijos” puede ser traducida como “ser adoptados por Dios como sus hijos” o “convertirse en Hijos de Dios”.`;
 
-function replace({baseText, searchText , replaceText = false, antesMatch = '', despuesMatch = '', antesReplace = '', despuesReplace = ''}){
-    const newText = reactStringReplace(baseText, searchText, (match, i) => {
+function replace({baseText, searchText , replaceText = '', options = {}, replaceIndexes}){
+
+    const _options = {beforeMatch: '', afterMatch: '', beforeReplace: '', afterReplace: '', ...options};
+
+    let index = -1;
+
+    const replacedText = reactStringReplace(baseText, searchText, (match) => {
+      index++;
+      if (!replaceIndexes) return match;
+      if (replaceIndexes === 'all' || replaceIndexes === index || (Array.isArray(replaceIndexes) && replaceIndexes.includes(index))) return replaceText;
+      return match;
+    }).join('');
+
+    const occurrencesSource = reactStringReplace(replacedText, searchText, (match, i) => {
     if (replaceText) {
-      return `${antesMatch}${match}${despuesMatch}${antesReplace}${replaceText}${despuesReplace}`;
-    } else { 
-      return `${antesMatch}${match}${despuesMatch}`; 
-    }   
+      return `${_options.beforeMatch}${match}${_options.afterMatch}${_options.beforeReplace}${replaceText}${_options.afterReplace}`;
+    } else {
+      return `${_options.beforeMatch}${match}${_options.afterMatch}`;
+    }
   });
-  function fullText(newText) {
+  function getOccurrences(occurrencesSource) {
     const references = [];
-    for (let i = 0; i < newText.length; i+=2) {
-      if (newText[i+1]){
-        const element = newText[i+0]?.slice(-10) + newText[i+1] + newText[i+2]?.slice(0,10); 
+    for (let i = 0; i < occurrencesSource.length; i+=2) {
+      if (occurrencesSource[i+1]){
+        const element = occurrencesSource[i+0]?.slice(-10) + occurrencesSource[i+1] + occurrencesSource[i+2]?.slice(0,10); 
         references.push(element);
       }
     };
     return references;
   };
-  console.log(fullText(newText));
-  return newText;
+  return {replacedText, occurrences: getOccurrences(occurrencesSource)};
 };
 
-console.log(replace({baseText:text, searchText:'adopc', antesMatch:'MATCH:', despuesMatch:',', antesReplace:'REPLACE:', despuesReplace:'.', replaceText:'REPLACING'}));
+const auxiliar = replace({baseText:text, searchText:'adopción', replaceText: '!texto!', replaceIndexes: [0, 2], options:{beforeMatch: 'HHHHHHHH'}});
+console.log(auxiliar);
+
+console.log(auxiliar.replacedText);
 
 
 document.querySelector('#app').innerHTML = `
